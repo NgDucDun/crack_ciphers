@@ -1,2 +1,6 @@
 /target
-/src/!*.rs
+/src/plaintext.txt
+/src/plaintext.txt.old
+/src/ciphertext.txt
+/src/perf.data
+/src/perf.data.old
