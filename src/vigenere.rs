@@ -89,14 +89,14 @@ fn find_key_lengths(ciphertext: &str) -> Result<Vec<usize>, &str> {
 }
 
 fn hill_climb(ciphertext: &str, key: &str, matrix: &FitnessMatrix) -> (f64, String) {
-    let mut plaintext: Vec<usize> = decrypt(ciphertext, key)
+    let mut plaintext: Vec<u8> = decrypt(ciphertext, key)
         .chars()
-        .map(|x| x as usize - 97)
+        .map(|x| x as u8 - 97)
         .collect();
     let mut key: Vec<char> = key.chars().collect();
 
-    let ciphertext: Vec<usize> = ciphertext.chars()
-        .map(|x| x as usize - 97)
+    let ciphertext: Vec<u8> = ciphertext.chars()
+        .map(|x| x as u8 - 97)
         .collect();
         
     let mut current = compute_fitness(&plaintext, matrix);
@@ -104,7 +104,7 @@ fn hill_climb(ciphertext: &str, key: &str, matrix: &FitnessMatrix) -> (f64, Stri
         let mut better_key = false;
         for key_idx in 0..key.len() {
             for alphabet_char in ALPHABET {
-                let alphabet_bin = alphabet_char as usize - 97;
+                let alphabet_bin = alphabet_char as u8 - 97;
                 for idx in (key_idx..plaintext.len()).step_by(key.len()) {
                     plaintext[idx] = (ciphertext[idx]+26-alphabet_bin) % 26;
                 }
@@ -115,7 +115,7 @@ fn hill_climb(ciphertext: &str, key: &str, matrix: &FitnessMatrix) -> (f64, Stri
                     current = proposal;
                     better_key = true;
                 } else {
-                    let key_bin = key[key_idx] as usize - 97;
+                    let key_bin = key[key_idx] as u8 - 97;
                     for idx in (key_idx..plaintext.len()).step_by(key.len()) {
                         plaintext[idx] = (ciphertext[idx]+26-key_bin) % 26;
                     }

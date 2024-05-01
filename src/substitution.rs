@@ -52,10 +52,10 @@ fn hill_climb(ciphertext: &str, rev_key: &[char; 26],
                 matrix: &FitnessMatrix) -> (f64, [char; 26]) 
 {
     let char_positions = generate_char_positions(ciphertext);
-    let mut plaintext: Vec<usize> = decrypt(ciphertext, rev_key)
+    let mut plaintext: Vec<u8> = decrypt(ciphertext, rev_key)
         .unwrap()
         .chars()
-        .map(|s| if s == ' ' { 26 } else { s as usize - 97})
+        .map(|s| if s == ' ' { 26 } else { s as u8 - 97})
         .collect();
     let mut key = rev_key.clone();
 
@@ -64,8 +64,8 @@ fn hill_climb(ciphertext: &str, rev_key: &[char; 26],
         let mut better_key = false;
         for to in 0..key.len() {
             for from in to+1..key.len() {
-                let c1 = key[to] as usize - 97;
-                let c2 = key[from] as usize - 97;
+                let c1 = key[to] as u8 - 97;
+                let c2 = key[from] as u8 - 97;
 
                 for pos in &char_positions[to] {
                     plaintext[*pos] = c2;

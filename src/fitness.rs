@@ -40,7 +40,8 @@ pub fn make_fitness_matrix_file() {
 }
 
 pub struct FitnessMatrix {
-    matrix: Vec<u64>,
+    // 32768 = 32^4 / 32
+    matrix: [u64; 32768],
 }
 
 pub fn generate_fitness_matrix_from_file() -> FitnessMatrix {
@@ -49,23 +50,28 @@ pub fn generate_fitness_matrix_from_file() -> FitnessMatrix {
         .split("\n")
         .map(|x| (x.parse::<f64>().unwrap()/100.0*2.0).round() as u8)
         .collect::<Vec<u8>>();
-    let mut bit_matrix: Vec<u64> = Vec::new();
+    let mut bit_matrix: [u64; 32768] = [0; 32768];
+    let mut bit_matrix_idx = 0;
     for i in (0..matrix.len()).step_by(32) {
         let mut bit: u64 = 0;
         for j in 0..32 {
             bit |= (matrix[i+j] as u64) << (j*2);
         }
-        bit_matrix.push(bit);
+        bit_matrix[bit_matrix_idx] = bit;
+        bit_matrix_idx += 1;
     }
     FitnessMatrix { matrix: bit_matrix }
 }
 
-pub fn compute_fitness(text: &Vec<usize>, matrix: &FitnessMatrix) -> f64 {
-    let mut idx = (text[0]<<10) + (text[1]<<5) + text[2];
+pub fn compute_fitness(text: &Vec<u8>, matrix: &FitnessMatrix) -> f64 {
+    let mut idx: usize = ((text[0] as usize) << 10) + 
+        ((text[1] as usize) << 5) +
+        text[2] as usize;
     let mut fitness = 0;
     for text_char in &text[3..] {
-        idx = ((idx & 0x7FFF) << 5) | text_char;
-        let val = matrix.matrix[idx>>5] >> (idx%32 << 1) & 0x03;
+        idx = ((idx & 0x7FFF) << 5) | (*text_char as usize);
+        //                         *32         mod 32
+        let val = matrix.matrix[idx>>5] >> ((idx&0x1F) << 1) & 0x03;
         fitness += val as u64;
     }
     fitness as f64 / 2.0 * 100.0 / (text.len()-3) as f64
