@@ -1,32 +1,36 @@
-use counter::Counter;
 use std::fs;
 
 fn generate_fitness_matrix(text: &str) -> Vec<f64> {
-    let text_bin: Vec<usize> = text.chars()
-        .map(|x| if x == ' ' { 26 } else { x as usize - 97 })
+    let text_bin: Vec<u8> = text.chars()
+        .map(|x| if x == ' ' { 26 } else { x as u8 - 97 })
         .collect();
-    let quad_counts: Counter<_> = 
-        (0..text_bin.len()-3).into_iter()
-        .map(|i| &text_bin[i..i+4]).collect();
-    let total = quad_counts.total::<usize>() as f64;
-
-    let min_value = quad_counts
-        .most_common_ordered()[quad_counts.len()-1].1 as f64;
-    let offset = (min_value / 10.0 / total).log10();
+    let mut quad_counts: Vec<u32> = vec![0; 32*32*32*32];
+    for i in 0..text_bin.len()-3 {
+        let idx = ((text_bin[i] as usize) << 15) +
+            ((text_bin[i+1] as usize) << 10) +
+            ((text_bin[i+2] as usize) << 5) +
+            text_bin[i+3] as usize;
+        quad_counts[idx] += 1;
+    }
+    let total = text_bin.len() - 3;
+    
+    let min_value = *quad_counts.iter()
+        .filter(|x| **x != 0)
+        .min()
+        .unwrap();
+    let offset = (min_value as f64 / 10.0 / total as f64).log10();
 
     let mut matrix: Vec<f64> = vec![0.0; 32*32*32*32];
     let mut norm = 0.0;
-    for (quad, value) in quad_counts.into_iter() {
-        let prop = value as f64 / total;
+    for (idx, value) in quad_counts.into_iter().enumerate() {
+        if value == 0 { continue; }
+        let prop = value as f64 / total as f64;
         let new_value = prop.log10() - offset;
         norm += prop * new_value;
 
-        let idx = (quad[0]<<15) + (quad[1]<<10) +
-                    (quad[2]<<5) + quad[3];
         matrix[idx] = new_value;
     }
-    let matrix: Vec<f64> = matrix.into_iter()
-        .map(|x| x / norm * 100.0).collect();
+    matrix.iter_mut().for_each(|x| *x = *x / norm * 100.0);
     matrix
 }
 
